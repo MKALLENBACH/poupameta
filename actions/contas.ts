@@ -1,0 +1,140 @@
+'use server'
+
+import { z } from 'zod'
+import { createServerClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+import { criarCaixinha } from './caixinhas'
+import { proximaData } from '@/lib/recurrence'
+
+const ContaSchema = z.object({
+  nome: z.string().min(1).max(100),
+  valor: z.number().positive(),
+  data_vencimento: z.string().min(1),
+  frequencia_economia: z.enum(['diaria', 'semanal']),
+  recorrencia_tipo: z.enum(['nenhuma', 'diaria', 'semanal', 'mensal']),
+  prioridade: z.boolean(),
+  icone: z.string().optional().default('💰'),
+  categoria: z.string().nullable().optional(),
+  notas: z.string().nullable().optional(),
+})
+
+export type ContaInput = z.infer<typeof ContaSchema>
+
+export async function criarConta(data: ContaInput) {
+  const parsed = ContaSchema.parse(data)
+  const supabase = createServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('Não autorizado')
+
+  const { data: conta, error } = await supabase
+    .from('contas')
+    .insert({ ...parsed, user_id: user.id })
+    .select()
+    .single()
+
+  if (error) throw error
+
+  await criarCaixinha({
+    conta_id: conta.id,
+    meta_valor: conta.valor,
+    frequencia: conta.frequencia_economia,
+    data_vencimento: conta.data_vencimento,
+  })
+
+  revalidatePath('/dashboard')
+  return conta
+}
+
+export async function atualizarConta(
+  id: string,
+  data: Partial<ContaInput>
+) {
+  const supabase = createServerClient()
+  const { error } = await supabase
+    .from('contas')
+    .update(data)
+    .eq('id', id)
+  if (error) throw error
+  revalidatePath('/dashboard')
+}
+
+export async function excluirConta(id: string) {
+  const supabase = createServerClient()
+  const { error } = await supabase.from('contas').delete().eq('id', id)
+  if (error) throw error
+  revalidatePath('/dashboard')
+}
+
+export async function duplicarConta(id: string) {
+  const supabase = createServerClient()
+  const { data: original } = await supabase
+    .from('contas')
+    .select('*')
+    .eq('id', id)
+    .single()
+  if (!original) throw new Error('Conta não encontrada')
+  // Return fields without id/timestamps for the confirmation modal
+  const { id: _id, created_at: _ca, updated_at: _ua, ...fields } = original
+  return fields
+}
+
+export async function salvarDuplicacao(fields: ContaInput) {
+  await criarConta(fields)
+  revalidatePath('/dashboard')
+}
+
+export async function concluirConta(id: string) {
+  const supabase = createServerClient()
+  const { data: conta } = await supabase
+    .from('contas')
+    .select('*')
+    .eq('id', id)
+    .single()
+  if (!conta) throw new Error('Conta não encontrada')
+
+  await supabase.from('contas').update({ status: 'concluida' }).eq('id', id)
+  await supabase
+    .from('caixinhas')
+    .update({ status: 'concluida' })
+    .eq('conta_id', id)
+
+  if (conta.recorrencia_tipo !== 'nenhuma') {
+    await criarConta({
+      nome: conta.nome,
+      valor: conta.valor,
+      data_vencimento: proximaData(
+        conta.data_vencimento,
+        conta.recorrencia_tipo
+      ),
+      frequencia_economia: conta.frequencia_economia,
+      recorrencia_tipo: conta.recorrencia_tipo,
+      prioridade: conta.prioridade,
+      icone: conta.icone,
+      categoria: conta.categoria,
+      notas: conta.notas,
+    })
+  }
+
+  revalidatePath('/dashboard')
+}
+
+export async function listarContas() {
+  const supabase = createServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data, error } = await supabase
+    .from('contas')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('status', 'ativa')
+    .order('prioridade', { ascending: false })
+    .order('data_vencimento', { ascending: true })
+
+  if (error) throw error
+  return data ?? []
+}
