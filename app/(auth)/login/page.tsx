@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -22,6 +22,20 @@ export default function LoginPage() {
   const router = useRouter()
   const [showPass, setShowPass] = useState(false)
   const [authError, setAuthError] = useState('')
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        router.push('/dashboard')
+      } else {
+        setIsCheckingAuth(false)
+      }
+    }
+    checkAuth()
+  }, [router])
 
   const {
     register,
@@ -48,7 +62,13 @@ export default function LoginPage() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-brand-700/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="w-full max-w-sm space-y-8 relative">
+      {isCheckingAuth ? (
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-400 text-sm animate-pulse">Verificando sessão...</p>
+        </div>
+      ) : (
+        <div className="w-full max-w-sm space-y-8 relative">
         {/* Logo */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 shadow-xl shadow-brand-900/50 glow">
@@ -126,6 +146,7 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+      )}
     </div>
   )
 }
