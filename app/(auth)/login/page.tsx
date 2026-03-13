@@ -62,19 +62,7 @@ export default function LoginPage() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-brand-700/10 rounded-full blur-3xl" />
       </div>
 
-      {isCheckingAuth ? (
-        <div className="w-full max-w-sm space-y-8 relative flex flex-col items-center justify-center min-h-[300px]">
-          <div className="text-center space-y-4 animate-in fade-in zoom-in duration-500">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-brand-600/20 shadow-xl shadow-brand-900/50 glow animate-pulse">
-              <PiggyBank size={36} className="text-brand-400" />
-            </div>
-            <p className="text-brand-400/80 text-sm font-medium tracking-wide">
-              Preparando seu cofre...
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="w-full max-w-sm space-y-8 relative">
+      <div className="w-full max-w-sm space-y-8 relative">
         {/* Logo */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 shadow-xl shadow-brand-900/50 glow">
@@ -94,6 +82,7 @@ export default function LoginPage() {
               type="email"
               label="Email"
               placeholder="seu@email.com"
+              disabled={isCheckingAuth || isSubmitting}
               error={errors.email?.message}
               {...register('email')}
             />
@@ -104,13 +93,15 @@ export default function LoginPage() {
                 type={showPass ? 'text' : 'password'}
                 label="Senha"
                 placeholder="••••••••"
+                disabled={isCheckingAuth || isSubmitting}
                 error={errors.password?.message}
                 {...register('password')}
               />
               <button
                 type="button"
+                disabled={isCheckingAuth || isSubmitting}
                 onClick={() => setShowPass(!showPass)}
-                className="absolute right-3 top-9 text-slate-500 hover:text-slate-300 transition-colors"
+                className="absolute right-3 top-9 text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -122,8 +113,8 @@ export default function LoginPage() {
 
             <div className="flex justify-end">
               <Link
-                href="/recuperar-senha"
-                className="text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                href={isCheckingAuth ? "#" : "/recuperar-senha"}
+                className={`text-xs text-brand-400 transition-colors ${isCheckingAuth ? 'opacity-50 cursor-default pointer-events-none' : 'hover:text-brand-300'}`}
               >
                 Esqueceu a senha?
               </Link>
@@ -133,26 +124,26 @@ export default function LoginPage() {
               type="submit"
               variant="primary"
               size="lg"
-              loading={isSubmitting}
-              className="w-full"
+              loading={isCheckingAuth || isSubmitting}
+              disabled={isCheckingAuth || isSubmitting}
+              className="w-full transition-all"
               id="btn-entrar"
             >
-              Entrar
+              {isCheckingAuth ? 'Verificando...' : 'Entrar'}
             </Button>
           </form>
 
           <p className="text-center text-sm text-slate-500">
             Não tem conta?{' '}
             <Link
-              href="/cadastro"
-              className="text-brand-400 hover:text-brand-300 font-medium transition-colors"
+              href={isCheckingAuth ? "#" : "/cadastro"}
+              className={`text-brand-400 font-medium transition-colors ${isCheckingAuth ? 'opacity-50 cursor-default pointer-events-none' : 'hover:text-brand-300'}`}
             >
               Cadastre-se
             </Link>
           </p>
         </div>
       </div>
-      )}
     </div>
   )
 }
