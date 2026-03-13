@@ -26,7 +26,7 @@ export default async function DashboardPage() {
   // Fetch monthly savings
   const { data: registros } = await supabase
     .from('registros_economia')
-    .select('valor, status')
+    .select('valor, status, caixinha_id, data')
     .gte('data', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
     .neq('status', 'skipped')
 
@@ -56,6 +56,8 @@ export default async function DashboardPage() {
     if (priB !== priA) return priB - priA
     return new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime()
   })
+
+  const hojeStr = new Date().toISOString().split('T')[0]
 
   return (
     <div className="px-4 py-6 max-w-5xl mx-auto space-y-6 lg:px-8 lg:py-8">
@@ -95,9 +97,14 @@ export default async function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {sorted.map((caixinha) => (
-                <CaixinhaCard key={caixinha.id} caixinha={caixinha as any} />
-              ))}
+              {sorted.map((caixinha) => {
+                const jaGuardouHoje = (registros ?? []).some(
+                  (r) => r.caixinha_id === caixinha.id && r.data === hojeStr && r.status !== 'skipped'
+                )
+                return (
+                  <CaixinhaCard key={caixinha.id} caixinha={caixinha as any} jaGuardouHoje={jaGuardouHoje} />
+                )
+              })}
             </div>
           )}
         </section>

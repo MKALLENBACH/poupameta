@@ -9,9 +9,10 @@ import type { CaixinhaComConta } from '@/lib/types'
 
 interface CaixinhaCardProps {
   caixinha: CaixinhaComConta
+  jaGuardouHoje?: boolean
 }
 
-export function CaixinhaCard({ caixinha }: CaixinhaCardProps) {
+export function CaixinhaCard({ caixinha, jaGuardouHoje }: CaixinhaCardProps) {
   const openCaixinha = useDashboardStore((s) => s.openCaixinha)
   const progress = percentualProgresso(caixinha.meta_valor, caixinha.valor_guardado)
   const dias = diasRestantes(new Date(caixinha.data_vencimento + 'T00:00:00'))
@@ -27,12 +28,13 @@ export function CaixinhaCard({ caixinha }: CaixinhaCardProps) {
     <button
       onClick={() => openCaixinha(caixinha.id)}
       className={cn(
-        'w-full text-left bg-[#13151f] border rounded-2xl p-4',
+        'w-full text-left bg-[#13151f] border rounded-2xl p-4 relative overflow-hidden',
         'transition-all duration-200 hover:border-brand-500/40 hover:bg-[#1a1d2e]',
         'focus:outline-none focus:ring-2 focus:ring-brand-500/50',
         urgencia === 'danger' ? 'border-red-500/30' :
         urgencia === 'warning' ? 'border-amber-500/30' :
-        'border-white/8'
+        'border-white/8',
+        jaGuardouHoje && 'opacity-60 saturate-50 border-emerald-500/20 bg-[#16221d]'
       )}
     >
       {/* Header */}
@@ -49,13 +51,16 @@ export function CaixinhaCard({ caixinha }: CaixinhaCardProps) {
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          {caixinha.conta.prioridade && (
+          {jaGuardouHoje && (
+            <Badge variant="success" size="sm">✓ Guardado Hoje</Badge>
+          )}
+          {!jaGuardouHoje && caixinha.conta.prioridade && (
             <Badge variant="brand" size="sm">★ Prioridade</Badge>
           )}
-          {urgencia === 'danger' && (
+          {!jaGuardouHoje && urgencia === 'danger' && (
             <Badge variant="danger" size="sm">Urgente</Badge>
           )}
-          {urgencia === 'warning' && (
+          {!jaGuardouHoje && urgencia === 'warning' && (
             <Badge variant="warning" size="sm">Atenção</Badge>
           )}
         </div>
