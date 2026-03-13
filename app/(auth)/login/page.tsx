@@ -63,9 +63,15 @@ export default function LoginPage() {
       </div>
 
       {isCheckingAuth ? (
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-400 text-sm animate-pulse">Verificando sessão...</p>
+        <div className="w-full max-w-sm space-y-8 relative flex flex-col items-center justify-center min-h-[300px]">
+          <div className="text-center space-y-4 animate-in fade-in zoom-in duration-500">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-brand-600/20 shadow-xl shadow-brand-900/50 glow animate-pulse">
+              <PiggyBank size={36} className="text-brand-400" />
+            </div>
+            <p className="text-brand-400/80 text-sm font-medium tracking-wide">
+              Preparando seu cofre...
+            </p>
+          </div>
         </div>
       ) : (
         <div className="w-full max-w-sm space-y-8 relative">
