@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false)
   const [authError, setAuthError] = useState('')
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -50,6 +51,7 @@ export default function LoginPage() {
     if (error) {
       setAuthError('Email ou senha incorretos.')
     } else {
+      setIsRedirecting(true)
       router.push('/dashboard')
       router.refresh()
     }
@@ -61,6 +63,23 @@ export default function LoginPage() {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-brand-700/10 rounded-full blur-3xl" />
       </div>
+
+      {/* Redirecting Modal Overlay */}
+      {isRedirecting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0e17]/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-[#13151f] border border-brand-500/20 rounded-2xl p-8 shadow-2xl flex flex-col items-center space-y-5 animate-in zoom-in-95 duration-300">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-brand-600/20 shadow-xl shadow-brand-900/50 glow animate-pulse">
+              <PiggyBank size={36} className="text-brand-400" />
+            </div>
+            <div className="text-center space-y-1">
+              <h2 className="text-xl font-bold text-white">Quase lá!</h2>
+              <p className="text-brand-400/80 text-sm font-medium">
+                Abrindo o seu cofre...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="w-full max-w-sm space-y-8 relative">
         {/* Logo */}
