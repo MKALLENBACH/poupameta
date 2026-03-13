@@ -44,6 +44,11 @@ export function CaixinhaCard({ caixinha, jaGuardouHoje }: CaixinhaCardProps) {
           <div className="min-w-0">
             <h3 className="font-semibold text-white text-sm truncate">
               {caixinha.conta.nome}
+              {caixinha.conta.parcelas_total && caixinha.conta.parcela_atual && (
+                <span className="text-slate-400 font-normal ml-1">
+                  ({caixinha.conta.parcela_atual}/{caixinha.conta.parcelas_total})
+                </span>
+              )}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
               {dias === 1 ? 'Vence amanhã' : `${dias} dias restantes`}

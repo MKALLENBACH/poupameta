@@ -1,6 +1,7 @@
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { ContaFormModal } from '@/components/conta/ContaFormModal'
+import { InstallPrompt } from '@/components/pwa/InstallPrompt'
 
 export default function AppLayout({
   children,
@@ -15,6 +16,7 @@ export default function AppLayout({
       </main>
       <BottomNav />
       <ContaFormModal />
+      <InstallPrompt />
     </div>
   )
 }

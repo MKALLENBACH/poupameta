@@ -17,6 +17,7 @@ const schema = z.object({
   data_vencimento: z.string().min(1, 'Data obrigatória'),
   frequencia_economia: z.enum(['diaria', 'semanal']),
   recorrencia_tipo: z.enum(['nenhuma', 'diaria', 'semanal', 'mensal']),
+  parcelas_total: z.number({ invalid_type_error: 'Deve ser número' }).int('Apenas números inteiros').positive('Deve ser maior que 0').nullable().optional(),
   prioridade: z.boolean(),
   icone: z.string().default('💰'),
   categoria: z.string().nullable().optional(),
@@ -37,6 +38,7 @@ export function ContaFormModal() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -47,6 +49,7 @@ export function ContaFormModal() {
     },
   })
 
+  const watchRecorrencia = watch('recorrencia_tipo')
   const [isLoadingConta, setIsLoadingConta] = useState(false)
 
   useEffect(() => {
@@ -67,6 +70,7 @@ export function ContaFormModal() {
             data_vencimento: data.data_vencimento,
             frequencia_economia: data.frequencia_economia,
             recorrencia_tipo: data.recorrencia_tipo,
+            parcelas_total: data.parcelas_total,
             prioridade: data.prioridade,
             icone: data.icone,
           })
@@ -82,6 +86,7 @@ export function ContaFormModal() {
         data_vencimento: '',
         frequencia_economia: 'diaria',
         recorrencia_tipo: 'nenhuma',
+        parcelas_total: null,
         prioridade: false,
         icone: '💰',
       })
@@ -99,7 +104,12 @@ export function ContaFormModal() {
   function onSubmit(data: FormData) {
     startTransition(async () => {
       try {
-        const payload = { ...data, icone: selectedEmoji, valor: Number(data.valor) }
+        const payload = { 
+          ...data, 
+          icone: selectedEmoji, 
+          valor: Number(data.valor),
+          parcelas_total: data.recorrencia_tipo === 'nenhuma' ? null : (data.parcelas_total || null)
+        }
         if (contaEditId) {
           await atualizarConta(contaEditId, payload)
           addToast('Conta atualizada!', 'success')
@@ -213,6 +223,22 @@ export function ContaFormModal() {
             </select>
           </div>
         </div>
+
+        {watchRecorrencia !== 'nenhuma' && (
+          <div className="animate-in fade-in zoom-in-95 duration-200">
+            <Input
+              id="parcelas_total"
+              type="number"
+              label="Qtd. de Ocorrências (Parcelas - opcional)"
+              placeholder="Ex: 5, 12..."
+              error={errors.parcelas_total?.message}
+              {...register('parcelas_total', { 
+                setValueAs: v => v === "" ? null : parseInt(v, 10) 
+              })}
+            />
+            <p className="text-[10px] text-slate-500 mt-1 ml-1">Deixe em branco para repetir indefinidamente.</p>
+          </div>
+        )}
 
         <label className="flex items-center gap-3 cursor-pointer group">
           <input

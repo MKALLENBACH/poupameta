@@ -12,6 +12,8 @@ export interface Conta {
   data_vencimento: string
   frequencia_economia: Frequencia
   recorrencia_tipo: RecorrenciaTipo
+  parcelas_total: number | null
+  parcela_atual: number | null
   prioridade: boolean
   status: ContaStatus
   icone: string

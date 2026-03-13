@@ -12,6 +12,8 @@ const ContaSchema = z.object({
   data_vencimento: z.string().min(1),
   frequencia_economia: z.enum(['diaria', 'semanal']),
   recorrencia_tipo: z.enum(['nenhuma', 'diaria', 'semanal', 'mensal']),
+  parcelas_total: z.number().nullable().optional(),
+  parcela_atual: z.number().nullable().optional(),
   prioridade: z.boolean(),
   icone: z.string().optional().default('💰'),
   categoria: z.string().nullable().optional(),
@@ -101,20 +103,27 @@ export async function concluirConta(id: string) {
     .eq('conta_id', id)
 
   if (conta.recorrencia_tipo !== 'nenhuma') {
-    await criarConta({
-      nome: conta.nome,
-      valor: conta.valor,
-      data_vencimento: proximaData(
-        conta.data_vencimento,
-        conta.recorrencia_tipo
-      ),
-      frequencia_economia: conta.frequencia_economia,
-      recorrencia_tipo: conta.recorrencia_tipo,
-      prioridade: conta.prioridade,
-      icone: conta.icone,
-      categoria: conta.categoria,
-      notas: conta.notas,
-    })
+    const hasLimit = conta.parcelas_total !== null && conta.parcelas_total > 0
+    const atingiuLimite = hasLimit && (conta.parcela_atual ?? 1) >= (conta.parcelas_total as number)
+
+    if (!atingiuLimite) {
+      await criarConta({
+        nome: conta.nome,
+        valor: conta.valor,
+        data_vencimento: proximaData(
+          conta.data_vencimento,
+          conta.recorrencia_tipo
+        ),
+        frequencia_economia: conta.frequencia_economia,
+        recorrencia_tipo: conta.recorrencia_tipo,
+        parcelas_total: conta.parcelas_total,
+        parcela_atual: (conta.parcela_atual ?? 1) + 1,
+        prioridade: conta.prioridade,
+        icone: conta.icone,
+        categoria: conta.categoria,
+        notas: conta.notas,
+      })
+    }
   }
 
   revalidatePath('/dashboard')
