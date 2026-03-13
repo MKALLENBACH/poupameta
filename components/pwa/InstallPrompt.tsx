@@ -102,7 +102,7 @@ export function InstallPrompt() {
             <p>Para instalar no iOS:</p>
             <ol className="list-decimal pl-4 mt-1 space-y-1">
               <li>Toque no botão de Compartilhar <span className="inline-block px-1 border border-white/20 rounded mx-1">⎋</span></li>
-              <li>Role para baixo e toque em <strong>"Adicionar à Tela de Início"</strong> <span className="inline-block px-1 border border-white/20 rounded mx-1">+</span></li>
+              <li>Role para baixo e toque em <strong>&quot;Adicionar à Tela de Início&quot;</strong> <span className="inline-block px-1 border border-white/20 rounded mx-1">+</span></li>
             </ol>
           </div>
         ) : (
