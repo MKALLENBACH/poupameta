@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { useDashboardStore } from '@/store/dashboardStore'
+import { createClient } from '@/lib/supabase/client'
 import { criarConta, atualizarConta, excluirConta } from '@/actions/contas'
 
 const schema = z.object({
@@ -43,9 +44,50 @@ export function ContaFormModal() {
       frequencia_economia: 'diaria',
       recorrencia_tipo: 'nenhuma',
       prioridade: false,
-      icone: '💰',
     },
   })
+
+  const [isLoadingConta, setIsLoadingConta] = useState(false)
+
+  useEffect(() => {
+    if (contaEditId && isContaModalOpen) {
+      setIsLoadingConta(true)
+      const fetchConta = async () => {
+        const supabase = createClient()
+        const { data } = await supabase
+          .from('contas')
+          .select('*')
+          .eq('id', contaEditId)
+          .single()
+        
+        if (data) {
+          reset({
+            nome: data.nome,
+            valor: Number(data.valor),
+            data_vencimento: data.data_vencimento,
+            frequencia_economia: data.frequencia_economia,
+            recorrencia_tipo: data.recorrencia_tipo,
+            prioridade: data.prioridade,
+            icone: data.icone,
+          })
+          setSelectedEmoji(data.icone || '💰')
+        }
+        setIsLoadingConta(false)
+      }
+      fetchConta()
+    } else if (!contaEditId && isContaModalOpen) {
+      reset({
+        nome: '',
+        valor: undefined as any,
+        data_vencimento: '',
+        frequencia_economia: 'diaria',
+        recorrencia_tipo: 'nenhuma',
+        prioridade: false,
+        icone: '💰',
+      })
+      setSelectedEmoji('💰')
+    }
+  }, [contaEditId, isContaModalOpen, reset])
 
   function handleClose() {
     closeContaModal()
@@ -92,6 +134,12 @@ export function ContaFormModal() {
       title={contaEditId ? 'Editar Conta' : 'Nova Conta'}
       size="md"
     >
+      {isLoadingConta ? (
+        <div className="flex flex-col items-center justify-center p-10 space-y-3">
+          <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-slate-400">Carregando dados da conta...</p>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Emoji picker */}
         <div>
@@ -236,6 +284,7 @@ export function ContaFormModal() {
           </div>
         )}
       </form>
+      )}
     </Modal>
   )
 }
