@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { SummaryCards } from '@/components/dashboard/SummaryCards'
 import { CaixinhaCard } from '@/components/dashboard/CaixinhaCard'
 import { CaixinhaDetailModal } from '@/components/caixinha/CaixinhaDetailModal'
+import { VencimentoModal } from '@/components/conta/VencimentoModal'
 import { calcularResumo } from '@/lib/calculations'
 import { CurrentDate } from '@/components/dashboard/CurrentDate'
 
@@ -58,6 +59,19 @@ export default async function DashboardPage() {
   })
 
   const hojeStr = new Date().toISOString().split('T')[0]
+
+  // Query contas that are overdue within the last 3 days (inclusive of today)
+  const tresDiasAtras = new Date()
+  tresDiasAtras.setDate(tresDiasAtras.getDate() - 3)
+  const tresDiasAtrasStr = tresDiasAtras.toISOString().split('T')[0]
+
+  const { data: contasVencidas } = await supabase
+    .from('contas')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('status', 'ativa')
+    .gte('data_vencimento', tresDiasAtrasStr)
+    .lte('data_vencimento', hojeStr)
 
   return (
     <div className="px-4 py-6 max-w-5xl mx-auto space-y-6 lg:px-8 lg:py-8">
@@ -130,7 +144,7 @@ export default async function DashboardPage() {
                     <span className={`text-xs font-medium ${
                       dias <= 3 ? 'text-red-400' : dias <= 7 ? 'text-amber-400' : 'text-slate-400'
                     }`}>
-                      {dias <= 0 ? 'Vencido!' : dias === 1 ? 'amanhã' : `${dias}d`}
+                      {dias < 0 ? `${Math.abs(dias)}d atrás` : dias === 0 ? 'hoje' : dias === 1 ? 'amanhã' : `${dias}d`}
                     </span>
                   </div>
                 )
@@ -170,6 +184,9 @@ export default async function DashboardPage() {
 
       {/* Caixinha Detail Modal */}
       <CaixinhaDetailModal caixinhas={sorted as any} />
+
+      {/* Vencimento Prompt */}
+      <VencimentoModal contasVencidas={(contasVencidas ?? []) as any} />
     </div>
   )
 }

@@ -59,7 +59,30 @@ export async function atualizarConta(
     .update(data)
     .eq('id', id)
   if (error) throw error
+
+  // Sync linked active caixinha with new account values
+  const caixinhaUpdate: Record<string, unknown> = {}
+  if (data.valor !== undefined) caixinhaUpdate.meta_valor = data.valor
+  if (data.data_vencimento !== undefined) caixinhaUpdate.data_vencimento = data.data_vencimento
+  if (data.frequencia_economia !== undefined) caixinhaUpdate.frequencia = data.frequencia_economia
+
+  if (Object.keys(caixinhaUpdate).length > 0) {
+    const { data: caixinhas } = await supabase
+      .from('caixinhas')
+      .update(caixinhaUpdate)
+      .eq('conta_id', id)
+      .eq('status', 'ativa')
+      .select('id')
+
+    // Recalculate valor_por_periodo for each affected caixinha
+    if (caixinhas) {
+      const { recalcularCaixinha } = await import('./caixinhas')
+      await Promise.all(caixinhas.map((c) => recalcularCaixinha(c.id)))
+    }
+  }
+
   revalidatePath('/dashboard')
+  revalidatePath('/relatorios')
 }
 
 export async function excluirConta(id: string) {

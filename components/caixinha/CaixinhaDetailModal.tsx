@@ -152,7 +152,11 @@ export function CaixinhaDetailModal({ caixinhas }: CaixinhaDetailModalProps) {
           </div>
 
           <p className="text-xs text-slate-500 mt-2">
-            ⏱ {dias} {dias === 1 ? 'dia restante' : 'dias restantes'}
+            {dias < 0
+              ? `⚠️ Vencida há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? 'dia' : 'dias'}`
+              : dias === 0
+              ? '⏱ Vence hoje'
+              : `⏱ ${dias} ${dias === 1 ? 'dia restante' : 'dias restantes'}`}
           </p>
         </div>
 

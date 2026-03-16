@@ -4,19 +4,19 @@
 
 export type Frequencia = 'diaria' | 'semanal'
 
-/** Days between today and due date (minimum 1) */
+/** Days between today and due date (0 = today, negative = overdue) */
 export function diasRestantes(dataVencimento: Date): number {
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
   const due = new Date(dataVencimento)
   due.setHours(0, 0, 0, 0)
   const diff = due.getTime() - hoje.getTime()
-  return Math.max(1, Math.ceil(diff / 86_400_000))
+  return Math.ceil(diff / 86_400_000)
 }
 
 /** Remaining weeks rounded up (minimum 1) */
 export function semanasRestantes(dataVencimento: Date): number {
-  return Math.max(1, Math.ceil(diasRestantes(dataVencimento) / 7))
+  return Math.max(1, Math.ceil(Math.max(1, diasRestantes(dataVencimento)) / 7))
 }
 
 /** Amount still to save */

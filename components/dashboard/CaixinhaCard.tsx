@@ -51,7 +51,7 @@ export function CaixinhaCard({ caixinha, jaGuardouHoje }: CaixinhaCardProps) {
               )}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              {dias === 1 ? 'Vence amanhã' : `${dias} dias restantes`}
+              {dias < 0 ? 'Vencida!' : dias === 0 ? 'Vence hoje' : dias === 1 ? 'Vence amanhã' : `${dias} dias restantes`}
             </p>
           </div>
         </div>

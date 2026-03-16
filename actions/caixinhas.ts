@@ -42,10 +42,49 @@ export async function recalcularCaixinha(id: string) {
 
   const valorRestante = Math.max(0, c.meta_valor - c.valor_guardado)
   if (valorRestante === 0) {
+    // Mark caixinha as concluded
     await supabase
       .from('caixinhas')
       .update({ status: 'concluida' })
       .eq('id', id)
+
+    // Mark linked conta as concluded and create next installment if recurring
+    const { data: conta } = await supabase
+      .from('contas')
+      .select('*')
+      .eq('id', c.conta_id)
+      .single()
+
+    if (conta) {
+      await supabase
+        .from('contas')
+        .update({ status: 'concluida' })
+        .eq('id', conta.id)
+
+      if (conta.recorrencia_tipo !== 'nenhuma') {
+        const hasLimit = conta.parcelas_total !== null && conta.parcelas_total > 0
+        const atingiuLimite =
+          hasLimit && (conta.parcela_atual ?? 1) >= (conta.parcelas_total as number)
+
+        if (!atingiuLimite) {
+          const { criarConta } = await import('./contas')
+          const { proximaData } = await import('@/lib/recurrence')
+          await criarConta({
+            nome: conta.nome,
+            valor: conta.valor,
+            data_vencimento: proximaData(conta.data_vencimento, conta.recorrencia_tipo),
+            frequencia_economia: conta.frequencia_economia,
+            recorrencia_tipo: conta.recorrencia_tipo,
+            parcelas_total: conta.parcelas_total,
+            parcela_atual: (conta.parcela_atual ?? 1) + 1,
+            prioridade: conta.prioridade,
+            icone: conta.icone,
+            categoria: conta.categoria,
+            notas: conta.notas,
+          })
+        }
+      }
+    }
     return
   }
 
